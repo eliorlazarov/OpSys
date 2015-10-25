@@ -1,5 +1,5 @@
 #include <stdio.h>
-//#include <dirent.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h> // for open flags
@@ -9,29 +9,25 @@
 #include <string.h>
 
 
-void encryptDecrypt(const wchar_t* toEncrypt, int length,char* key, int keyLen)
-{
-//	const wchar_t* key = L"KEY"; // A readonly wide String
-//	wchar_t* output = new wchar_t[length];  // Make a temporary buffer
-
-	for (int i = 0; i < length; i++)
-	{
-		output[i] = toEncrypt[i] ^ key[i % wcslen(key)];    // i % 3 wil be ascending between 0,1,2
-	}
-	return output;
-}
-
 int main(int argc, char* argv[])
 {
 	char temp;
 	char currKey;
+	char curr;
+	char* buf[1];
 	if (argc != 4){
-		printf("Not enough argumaents/n");
+		printf("Not enough arguments/n");
 		return 1;
 	}
 	char buf[1];
 	int fd = open(argv[1]);
+	int fdWrite = open(argv[3]);
+
 	if (fd < 0){
+		printf("Error opening file: %s\n", strerror(errno));
+		return errno;
+	}
+	if (fdWrite < 0){
 		printf("Error opening file: %s\n", strerror(errno));
 		return errno;
 	}
@@ -40,9 +36,11 @@ int main(int argc, char* argv[])
 		printf("Error opening file: %s\n", strerror(errno));
 		return errno;
 	}
-	while (read(fd, buf, 1) == 1){
-		currKey
-		write();
+	while (curr = read(fd, buf, 1) == 1 && curr != EOF){
+		currKey = lseek(fdKey, 1, SEEK_CUR);
+		if (currKey == EOF)
+			currKey = lseek(fdKey, 0, SEEK_SET);
+		buf[0] = (currKey^curr);
+		write(fdWrite, buf, 1);
 	}
-	if (wrtie(fd,buf,1)<1)
 }
