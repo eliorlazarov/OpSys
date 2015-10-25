@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\Desktop\HW1.c">
+    <ClCompile Include="HW1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
