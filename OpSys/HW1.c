@@ -11,10 +11,12 @@
 
 int main(int argc, char* argv[])
 {
+	int place;
 	char temp;
 	char currKey;
 	char curr;
-	char* buf[1];
+	char buf[1];
+	char bufKey[1];
 	if (argc != 4){
 		printf("Not enough arguments\n");
 		return 1;
@@ -39,15 +41,31 @@ int main(int argc, char* argv[])
 		close(fdWrite);
 		return errno;
 	}
-	while (curr = read(fd, buf, 1) == 1 && curr != EOF){
-		currKey = lseek(fdKey, 1, SEEK_CUR);
+	while (read(fd, buf, 1) == 1 && curr != EOF){
+		if(read(fdKey,bufKey,1)!=1){
+		  printf("Error reading file: %s\n",strerror(errno));
+		  close(fd);
+		  close(fdWrite);
+		  close(fdKey);
+		  return errno;
+		}
+		printf("%c",buf[0]);
+		printf("%c",bufKey[0]);
+		buf[0] = (bufKey[0] ^ buf[0]);
+		if(write(fdWrite, buf, 1)!=1){
+		  printf("Error writing file: %s\n",strerror(errno));
+		  close(fd);
+		  close(fdWrite);
+		  close(fdKey);
+		  return errno;
+		}
+		//lseek(fd,1,SEEK_CUR);
+		//lseek(fdKey, 1, SEEK_CUR);
 		if (currKey == EOF)
-			currKey = lseek(fdKey, 0, SEEK_SET);
-		buf[0] = (void*)(currKey^curr);
-		write(fdWrite, buf, 1);
+			place = lseek(fdKey, 0, SEEK_SET);
 	}
     close(fd);
     close(fdWrite);
     close(fdKey);
     return 0;
-}
+} 
