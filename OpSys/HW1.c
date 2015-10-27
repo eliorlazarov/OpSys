@@ -29,26 +29,29 @@ int main(int argc, char* argv[])
 		printf("Not enough arguments\n");
 		return 1;
 	}
-	
+	//Try to open the input folder
 	if((dfd=opendir(argv[1]))==NULL){
-	  
-	//int fd = open(argv[1],O_RDONLY);
 	printf("Error opening dir: %s\n", strerror(errno));
 		return errno;
 	}
-
-
+	//Check if the output folder exists. if not, create it.
+	struct stat st = {0};
+	if(stat(argv[3],&st)==-1){
+	  mkdir(argv[3],0777);
+	}
+	//Try to open the output folder
 	if((dirWrite=opendir(argv[3]))==NULL){
 	  printf("Error opening dir: %s\n", strerror(errno));
+	  closedir(dfd);
 		return errno;
 	}
+	
 
 	int fdKey = open(argv[2],O_RDONLY);
-
 	if (fdKey < 0){
 		printf("Error opening file: %s\n", strerror(errno));
-		close(fd);
-		close(fdWrite);
+		closedir(dfd);
+		close(dirWrite);
 		return errno;
 	}
 		
@@ -62,8 +65,8 @@ int main(int argc, char* argv[])
 	  else{
 	if(stat(fileName,&statbuf)==-1){
 	  printf("Error reading file: %s\n", strerror(errno));
-		close(fd);
-		close(fdWrite);
+		closedir(dfd);
+		close(dirWrite);
 		return errno;
 	}
 	  char str[100];
@@ -73,13 +76,15 @@ int main(int argc, char* argv[])
 	  	fdWrite = open(str,O_WRONLY | O_CREAT | O_TRUNC);
 	if (fdWrite < 0){
 		printf("Error opening file: %s\n", strerror(errno));
-		close(fd);
+		closedir(dfd);
+		close(dirWrite);
 		return errno;
 	}
 	  fd = open(fileName,O_RDONLY);
 	  if(fd<0){
 		printf("Error opening file: %s\n", strerror(errno));
-		close(fd);
+		closedir(dfd);
+		close(dirWrite);
 		close(fdWrite);
 		return errno;
 	}
@@ -89,7 +94,8 @@ int main(int argc, char* argv[])
 	  k=read(fdKey,bufKey,1);
 		if(k<0){
 		  printf("Error reading file: %s\n",strerror(errno));
-
+		closedir(dfd);
+		close(dirWrite);
 		  close(fd);
 		  close(fdWrite);
 		  close(fdKey);
@@ -100,7 +106,8 @@ int main(int argc, char* argv[])
 		  k=read(fdKey,bufKey,1);
 		  if(k<0){
 		  printf("Error reading file: %s\n",strerror(errno));
-
+		closedir(dfd);
+		close(dirWrite);
 		  close(fd);
 		  close(fdWrite);
 		  close(fdKey);
@@ -112,6 +119,8 @@ int main(int argc, char* argv[])
 		
 		if(write(fdWrite, buf, 1)!=1){
 		  printf("Error writing file: %s\n",strerror(errno));
+		  closedir(dfd);
+		  close(dirWrite);
 		  close(fd);
 		  close(fdWrite);
 		  close(fdKey);
@@ -120,6 +129,8 @@ int main(int argc, char* argv[])
 
 	}
 	}
+    closedir(dfd);
+    close(dirWrite);
     close(fd);
     close(fdWrite);
     close(fdKey);
