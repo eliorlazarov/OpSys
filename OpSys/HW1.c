@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 	int place;
 	char temp;
 	char currKey;
-	char curr;
+	char curr='a';
 	char buf[1];
 	char bufKey[1];
 	DIR* dfd;
@@ -55,7 +55,6 @@ int main(int argc, char* argv[])
 	while((dp=readdir(dfd))!=NULL){
 	  struct stat statbuf;
 	sprintf(fileName,"%s/%s",argv[1],dp->d_name);
-	printf("fileName is: %s\n",fileName);
 
 	if((statbuf.st_mode & S_IFMT)==S_IFDIR || !(strcmp(dp->d_name,".")) || !(strcmp(dp->d_name,"..")))
 	  continue;
@@ -71,15 +70,13 @@ int main(int argc, char* argv[])
 	  strcpy(str,argv[3]);
 	   strcat(str,"/");
 	  strcat(str,dp->d_name);
-	  
-	  printf("str is: %s\n",str);
 	  	fdWrite = open(str,O_WRONLY | O_CREAT | O_TRUNC);
 	if (fdWrite < 0){
 		printf("Error opening file: %s\n", strerror(errno));
 		close(fd);
 		return errno;
 	}
-	  fd = open(argv[1],O_RDONLY);
+	  fd = open(fileName,O_RDONLY);
 	  if(fd<0){
 		printf("Error opening file: %s\n", strerror(errno));
 		close(fd);
@@ -87,7 +84,7 @@ int main(int argc, char* argv[])
 		return errno;
 	}
 	}
-	
+	int i=0;
 	while (read(fd, buf, 1) == 1 && curr != EOF){
 	  k=read(fdKey,bufKey,1);
 		if(k<0){
@@ -112,6 +109,7 @@ int main(int argc, char* argv[])
 		}
 		
 		buf[0] = (bufKey[0] ^ buf[0]);
+		
 		if(write(fdWrite, buf, 1)!=1){
 		  printf("Error writing file: %s\n",strerror(errno));
 		  close(fd);
