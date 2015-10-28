@@ -58,17 +58,20 @@ int main(int argc, char* argv[])
 	while((dp=readdir(dfd))!=NULL){
 	  struct stat statbuf;
 	sprintf(fileName,"%s/%s",argv[1],dp->d_name);
-
-	if((statbuf.st_mode & S_IFMT)==S_IFDIR || !(strcmp(dp->d_name,".")) || !(strcmp(dp->d_name,"..")))
-	  continue;
-	
-	  else{
 	if(stat(fileName,&statbuf)==-1){
 	  printf("Error reading file: %s\n", strerror(errno));
 		closedir(dfd);
 		close(dirWrite);
 		return errno;
 	}
+
+	if((statbuf.st_mode & S_IFMT)==S_IFDIR || !(strcmp(dp->d_name,".")) || !(strcmp(dp->d_name,".."))){
+	  printf("%s\n",fileName);
+	  continue;
+	}
+	
+	  else{
+
 	  char str[100];
 	  strcpy(str,argv[3]);
 	   strcat(str,"/");
