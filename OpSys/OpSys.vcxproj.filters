@@ -18,5 +18,8 @@
     <ClCompile Include="HW1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="directio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

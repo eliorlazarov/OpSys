@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="directio.c" />
     <ClCompile Include="HW1.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
