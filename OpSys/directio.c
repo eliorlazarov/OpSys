@@ -20,7 +20,7 @@ void printError(char* c) {
 	printf("Error in %s:%s\n", c, strerror(errno));
 }
 
-int writeToFile(int fd){ //Writes 128MB to the file
+int writeToFile(int fd){
 	char s[1024 * 1024];
 	int i, n;
 	for (i = 0; i < 1024 * 1024; i++) {
@@ -37,14 +37,6 @@ int writeToFile(int fd){ //Writes 128MB to the file
 		}
 	}
 	return 0;
-}
-
-
-void buildBuf(){ //puts random chars in buf
-	int i;
-	for (i = 0; i < 1024 * 1024; i++) {
-		buf[i] = random() % 256;
-	}
 }
 
 
@@ -76,10 +68,12 @@ int writeInRandomOffsets(int fd, int kb, int aligned){
 	return 0;
 }
 
-
-
-
-
+void fillBuffer(){
+	int i;
+	for (i = 0; i < 1024 * 1024; i++) {
+		buf[i] = random() % 256;
+	}
+}
 
 int main(int argc, char** argv){
 	assert(argc == 2);
@@ -133,7 +127,7 @@ int main(int argc, char** argv){
 		close(fd);
 	
 
-	buildBuf();
+	fillBuffer();
 
 	gettimeofday(&startTime, NULL);
 
@@ -186,9 +180,5 @@ int main(int argc, char** argv){
 		}
 	}
 
-
 	return 0;
-
-
-
 }
