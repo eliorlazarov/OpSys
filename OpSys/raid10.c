@@ -22,6 +22,15 @@ int		num_dev0;
 int		num_dev1;
 int		**dev_fd;
 
+
+int findWorkingDevice(int dev0) {
+	for (int i = 0; i < num_dev1; i++) {
+		if (dev_fd[dev0][i] >= 0)
+			return i;
+	}
+	return -1;
+}
+
 void do_raid0_rw(char* operation, int sector, int count)
 {
 	int i = sector;
@@ -31,20 +40,13 @@ void do_raid0_rw(char* operation, int sector, int count)
 		// find the relevant device for current sector
 		int block_num = i / SECTORS_PER_BLOCK;
 		int dev_num = block_num % num_dev0;
-		int defaultDev = -1;
+		
 		// make sure device didn't fail
-		for (int j = 0; j < num_dev1; j++) {
-			if (dev_fd[dev_num][j] >= 0) {
-				defaultDev = i;
-				if (DEBUG)
-					printf("%d\n", j);
-				break;
-			}
-		}
+		int defaultDev = findWorkingDevice(dev_num);
 		if (defaultDev == -1)
 		{
 			printf("No working drives\n");
-			break;
+			exit(0);
 		}
 		// find offset of sector inside device
 		int block_start = i / (num_dev0 * SECTORS_PER_BLOCK);
@@ -68,13 +70,30 @@ void do_raid0_rw(char* operation, int sector, int count)
 		assert(offset == lseek(dev_fd[dev_num], offset, SEEK_SET));
 
 		if (!strcmp(operation, "READ")) {
-			assert(size == read(dev_fd[dev_num][i], buf, size));
+			while (1) {
+				if (size != read(dev_fd[dev_num][defaultDev], buf, size)) {
+					close(dev_fd[dev_num][defaultDev]);
+					dev_fd[dev_num][defaultDev] = -1;
+					defaultDev = findWorkingDevice(dev_num);
+					if (defaultDev == -1)
+					{
+						printf("No working drives\n");
+						exit(0);
+					}
+				}
+				else
+					break;
+			}
+			
 
 		}
 		else if (!strcmp(operation, "WRITE"))
 			for (int j = 0; j < num_dev1; j++)
 				if (dev_fd[num_dev0][i] >= 0)
-					assert(size == write(dev_fd[num_dev0][j], buf, size));
+					if (size != write(dev_fd[num_dev0][j], buf, size)) {
+						close(dev_fd[num_dev0][j]);
+						dev_fd[num_dev0][j] = -1;
+					}
 
 		printf("Operation on device %d, sector %d-%d\n",
 			dev_num, sector_start, sector_end);
@@ -124,8 +143,8 @@ int main(int argc, char** argv)
 
 		// KILL specified device
 		if (!strcmp(operation, "KILL")) {
-			assert(!close(dev_fd[sector/num_dev0][sector%num_dev1]));
-			dev_fd[sector] = -1;
+			assert(!close(dev_fd[sector / num_dev0][sector % num_dev1]));
+			dev_fd[sector / num_dev0][sector % num_dev1] = -1;
 		}
 		else if (!strcmp(operation, "REPAIR")) {
 			sprintf(rep, "%s", &count);
