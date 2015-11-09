@@ -20,7 +20,7 @@ void printError(char* c) {
 	printf("Error in %s:%s\n", c, strerror(errno));
 }
 
-int writeToFile(int fd) { //Writes 128MB to the file
+int writeToFile(int fd){ //Writes 128MB to the file
 	char s[1024 * 1024];
 	int i, n;
 	for (i = 0; i < 1024 * 1024; i++) {
@@ -40,7 +40,7 @@ int writeToFile(int fd) { //Writes 128MB to the file
 }
 
 
-void buildBuf() { //puts random chars in buf
+void buildBuf(){ //puts random chars in buf
 	int i;
 	for (i = 0; i < 1024 * 1024; i++) {
 		buf[i] = random() % 256;
@@ -48,7 +48,7 @@ void buildBuf() { //puts random chars in buf
 }
 
 
-int writeInRandomOffsets(int fd, int kb, int aligned) {
+int writeInRandomOffsets(int fd, int kb, int aligned){
 	int i, offset, n;
 	for (i = 0; i < (1024 * 128) / kb; i++) {
 		if (aligned) {
@@ -81,8 +81,7 @@ int writeInRandomOffsets(int fd, int kb, int aligned) {
 
 
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv){
 	assert(argc == 2);
 	struct timeval start, end;
 	struct stat statbuf;
@@ -115,7 +114,6 @@ int main(int argc, char** argv)
 		else if (S_ISDIR(statbuf.st_mode)) {
 			printf("It is a directory\n");
 			return 0;
-
 		}
 
 		if (statbuf.st_size != 1024 * 1024 * 128) {
@@ -130,36 +128,26 @@ int main(int argc, char** argv)
 	if (n == -1) {
 		printError("write");
 		return 0;
-
 	}
-	else {
+	else 
 		close(fd);
-	}
+	
 
 	buildBuf();
 
-
-
 	gettimeofday(&start, NULL);
 
-	if (DIRECT) {
+	if (DIRECT) 
 		fd = open(argv[1], O_DIRECT | O_RDWR);
-	}
-	else {
+	else 
 		fd = open(argv[1], O_RDWR);
-	}
 
 	if (fd == -1) {
 		printError("open");
 		return 0;
-
 	}
-
-	if (writeInRandomOffsets(fd, WRITE_SIZE, ALIGNED) == -1) {
+	if (writeInRandomOffsets(fd, WRITE_SIZE, ALIGNED) == -1) 
 		return 0;
-
-	}
-
 	close(fd);
 	gettimeofday(&end, NULL);
 	seconds = end.tv_sec - start.tv_sec;
