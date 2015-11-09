@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="directio.c" />
     <ClCompile Include="HW1.c" />
+    <ClCompile Include="raid10.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{024A7A26-382E-4DC2-87FE-9BEB3359567D}</ProjectGuid>
