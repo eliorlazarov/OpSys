@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 
 	int i;
 	char line[1024];
-
+	char rep[1024];
 	// number of devices == number of arguments (ignore 1st)
 	sscanf(argv[1], "%d", num_dev0);
 	num_dev1 = (argc - 2) / num_dev0;
@@ -126,6 +126,12 @@ int main(int argc, char** argv)
 		if (!strcmp(operation, "KILL")) {
 			assert(!close(dev_fd[sector/num_dev0][sector%num_dev1]));
 			dev_fd[sector] = -1;
+		}
+		else if (!strcmp(operation, "REPAIR")) {
+			sprintf(rep, "%s", &count);
+			for (int i = 0; i < num_dev1; i++) {
+
+			}
 		}
 		// READ / WRITE
 		else {
