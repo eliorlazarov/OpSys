@@ -83,12 +83,12 @@ int writeInRandomOffsets(int fd, int kb, int aligned){
 
 int main(int argc, char** argv){
 	assert(argc == 2);
-	struct timeval start, end;
+	struct timeval startTime, endTime;
 	struct stat statbuf;
 	long seconds, useconds;
 	double mbPerSec, time;
-	int n = stat(argv[1], &statbuf), flag = 0, fd;
-	if (n == -1)
+	int errCheck = stat(argv[1], &statbuf), flag = 0, fd;
+	if (errCheck == -1)
 	{
 		if (errno == ENOENT) {
 			printf("Input file does not exist\n");
@@ -118,14 +118,14 @@ int main(int argc, char** argv){
 
 		if (statbuf.st_size != 1024 * 1024 * 128) {
 			fd = open(argv[1], O_TRUNC | O_RDWR);
-			n = writeToFile(fd);
+			errCheck = writeToFile(fd);
 		}
 	}
 	else {
 		fd = creat(argv[1], S_IRWXU);
-		n = writeToFile(fd);
+		errCheck = writeToFile(fd);
 	}
-	if (n == -1) {
+	if (errCheck == -1) {
 		printError("write");
 		return 0;
 	}
@@ -135,7 +135,7 @@ int main(int argc, char** argv){
 
 	buildBuf();
 
-	gettimeofday(&start, NULL);
+	gettimeofday(&startTime, NULL);
 
 	if (DIRECT) 
 		fd = open(argv[1], O_DIRECT | O_RDWR);
@@ -149,9 +149,9 @@ int main(int argc, char** argv){
 	if (writeInRandomOffsets(fd, WRITE_SIZE, ALIGNED) == -1) 
 		return 0;
 	close(fd);
-	gettimeofday(&end, NULL);
-	seconds = end.tv_sec - start.tv_sec;
-	useconds = end.tv_usec - start.tv_usec;
+	gettimeofday(&endTime, NULL);
+	seconds = endTime.tv_sec - startTime.tv_sec;
+	useconds = endTime.tv_usec - startTime.tv_usec;
 	time = seconds + useconds / 1000000.0;
 	mbPerSec = ((WRITE_SIZE * 1024)*((1024 * 128) / WRITE_SIZE)) / (1024 * 1024 * time);
 
