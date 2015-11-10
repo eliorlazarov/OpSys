@@ -118,16 +118,21 @@ int main(int argc, char** argv)
 	char line[1024];
 	char rep[1024];
 	// number of devices == number of arguments (ignore 1st)
-	sscanf(argv[1], "%d", num_dev0);
+
+	num_dev0=atoi(argv[1]);
+	printf("%d\n",num_dev0);
 	num_dev1 = (argc - 2) / num_dev0;
+	
 	int _dev_fd[num_dev0][num_dev1];
 	dev_fd = _dev_fd;
 
 	// open all devices
 	for (i = 0; i < num_dev0; ++i) {
 		for (int j = 0; j < num_dev1; j++) {
-			printf("Opening device %d: %s\n", i, argv[i + 2]);
+			printf("Opening device %d: %s\n", i, argv[i + j + 2]);
+			printf("here\n");
 			dev_fd[i][j] = open(argv[i + j + 2], O_RDWR);
+			
 			assert(dev_fd[i][j] >= 0);
 		}
 	}
