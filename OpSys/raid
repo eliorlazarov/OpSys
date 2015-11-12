@@ -59,8 +59,7 @@ void do_raid0_rw(char* operation, int sector, int count)
 		if (defaultDev == -1)
 		{
 			printf("No working drives\n");
-			closeAll();
-			exit(0);
+			break;
 		}
 		// find offset of sector inside device
 		int block_start = i / (1* SECTORS_PER_BLOCK);
@@ -86,14 +85,14 @@ void do_raid0_rw(char* operation, int sector, int count)
 		if (!strcmp(operation, "READ")) {
 			while (1) {
 				if (size != read(dev_fd[dev_num][defaultDev], buf, size)) {
+					printf("Something went wrong while reading\n");
 					close(dev_fd[dev_num][defaultDev]);
 					dev_fd[dev_num][defaultDev] = -1;
 					defaultDev = findWorkingDevice(dev_num);
 					if (defaultDev == -1)
 					{
 						printf("No working drives\n");
-						closeAll();
-						exit(0);
+						break;
 					}
 				}
 				else{
@@ -110,6 +109,7 @@ void do_raid0_rw(char* operation, int sector, int count)
 			for (int j = 0; j < num_dev1; j++){
 				if (dev_fd[dev_num][j] >= 0)
 					if (size != write(dev_fd[dev_num][j], buf, size)) {
+						printf("Something went wrong while writing\n");
 						close(dev_fd[dev_num][j]);
 						dev_fd[dev_num][j] = -1;
 					}
