@@ -135,11 +135,11 @@ int main(int argc, char** argv)
 	// vars for parsing input line
 	char operation[20];
 	int sector;
+	char countStr[1024];
 	int count;
-
 	// read input lines to get command of type "OP <SECTOR> <COUNT>"
 	while (fgets(line, 1024, stdin) != NULL) {
-		assert(sscanf(line, "%s %d %d", operation, &sector, &count) == 3);
+		assert(sscanf(line, "%s %d %s", operation, &sector, &countStr) == 3);
 
 		// KILL specified device
 		if (!strcmp(operation, "KILL")) {
@@ -147,14 +147,17 @@ int main(int argc, char** argv)
 			dev_fd[sector / num_dev0][sector % num_dev1] = -1;
 		}
 		else if (!strcmp(operation, "REPAIR")) {
-			sprintf(rep, "%s", &count);
+			
 			for (int i = 0; i < num_dev1; i++) {
 
 			}
 		}
 		// READ / WRITE
 		else {
-			do_raid0_rw(operation, sector, count);
+			count = atoi(countStr);
+			if (DEBUG)
+				printf("%d\n", count);
+			//do_raid0_rw(operation, sector, count);
 		}
 	}
 
