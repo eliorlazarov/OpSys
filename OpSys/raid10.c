@@ -41,7 +41,7 @@ void do_raid0_rw(char* operation, int sector, int count)
 		// find the relevant device for current sector
 		int block_num = i / SECTORS_PER_BLOCK;
 		int dev_num = block_num % num_dev0;
-		
+
 		// make sure device didn't fail
 		int defaultDev = findWorkingDevice(dev_num);
 		if (defaultDev == -1)
@@ -81,26 +81,26 @@ void do_raid0_rw(char* operation, int sector, int count)
 						exit(0);
 					}
 				}
-				else{
-				  printf("Operation on device %d %d, sector %d-%d\n",
-			dev_num, defaultDev, sector_start, sector_end);
-				  printf("%s\n",buf);
+				else {
+					printf("Operation on device %d %d, sector %d-%d\n",
+						dev_num, defaultDev, sector_start, sector_end);
+					printf("%s\n", buf);
 					break;
 				}
 			}
-			
+
 
 		}
 		else if (!strcmp(operation, "WRITE"))
-			for (int j = 0; j < num_dev1; j++){
+			for (int j = 0; j < num_dev1; j++) {
 				if (dev_fd[dev_num][j] >= 0)
 					if (size != write(dev_fd[dev_num][j], buf, size)) {
 						close(dev_fd[dev_num][j]);
 						dev_fd[dev_num][j] = -1;
 					}
 					else
-		printf("Operation on device %d %d, sector %d-%d\n",
-			dev_num, j, sector_start, sector_end);
+						printf("Operation on device %d %d, sector %d-%d\n",
+							dev_num, j, sector_start, sector_end);
 			}
 		i += num_sectors;
 	}
@@ -108,12 +108,12 @@ void do_raid0_rw(char* operation, int sector, int count)
 void closeAll() {
 	for (int i = 0; i < num_dev0; ++i) {
 		for (int j = 0; j < num_dev1; j++) {
-
-			close(dev_fd[i][j]);
+			if (dev_fd[i][j]>0)
+				close(dev_fd[i][j]);
 		}
 	}
-	for(int i=0; i< num_dev0;i++)
-	  free(dev_fd[i]);
+	for (int i = 0; i < num_dev0; i++)
+		free(dev_fd[i]);
 	free(dev_fd);
 }
 
@@ -126,24 +126,28 @@ int main(int argc, char** argv)
 	char rep[1024];
 	// number of devices == number of arguments (ignore 1st)
 
-	num_dev0=atoi(argv[1]);
-	
+	num_dev0 = atoi(argv[1]);
+
 	num_dev1 = (argc - 2) / num_dev0;
-	printf("%d %d\n",num_dev0,num_dev1);
+	printf("%d %d\n", num_dev0, num_dev1);
 	int _dev_fd[num_dev0][num_dev1];
 
 
-	
-	dev_fd=(int**)malloc(num_dev0*sizeof(int*));
-	for(int i=0; i< num_dev0;i++)
-	  dev_fd[i]=(int*)malloc(num_dev1*sizeof(int));
+
+	dev_fd = (int**)malloc(num_dev0*sizeof(int*));
+	for (int i = 0; i < num_dev0; i++)
+		dev_fd[i] = (int*)malloc(num_dev1*sizeof(int));
 
 	// open all devices
 	for (i = 0; i < num_dev0; i++) {
 		for (int j = 0; j < num_dev1; j++) {
 			printf("Opening device %d: %s\n", i, argv[i + j + 2]);
 			dev_fd[i][j] = open(argv[i + j + 2], O_RDWR);
-			assert(dev_fd[i][j] >= 0);
+			if (dev_fd[i][j] < 0)
+			{
+				closeAll();
+				exit(0);
+			}
 		}
 	}
 
@@ -162,7 +166,7 @@ int main(int argc, char** argv)
 			dev_fd[sector / num_dev0][sector % num_dev1] = -1;
 		}
 		else if (!strcmp(operation, "REPAIR")) {
-			
+
 			for (int i = 0; i < num_dev1; i++) {
 
 			}
