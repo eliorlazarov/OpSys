@@ -9,7 +9,7 @@
 #include <errno.h> 
 #include <string.h>
 #include <unistd.h>
-#define DEVICE_SIZE (1024*1024*256) // assume all devices identical in size
+#define DEVICE_SIZE (1024*1024*20) // assume all devices identical in size
 
 #define SECTOR_SIZE 512
 #define SECTORS_PER_BLOCK 4
@@ -96,8 +96,8 @@ void do_raid0_rw(char* operation, int sector, int count)
 					}
 				}
 				else{
-					printf("Operation on device %d %d, sector %d-%d\n",
-					       dev_num, defaultDev, sector_start, sector_end);
+					printf("Operation on device %d, sector %d-%d\n",
+					       dev_num*num_dev1+defaultDev, sector_start, sector_end);
 					
 					break;
 				}
@@ -146,9 +146,10 @@ int main(int argc, char** argv)
 	// open all devices
 	for (i = 0; i < num_dev0; i++) {
 		for (int j = 0; j < num_dev1; j++) {
-			printf("Opening device %d: %s\n", i+j, argv[i + j + 2]);
+			printf("Opening device %d: %s\n", i*num_dev1+j, argv[i*num_dev1 + j + 2]);
 			
-			dev_fd[i][j] = open(argv[i + j + 2], O_RDWR);
+			dev_fd[i][j] = open(argv[i*num_dev1 + j + 2], O_RDWR);
+			printf("%d\n",dev_fd[i][j]);
 			assert(dev_fd[i][j] >= 0);
 		}
 	}
@@ -160,7 +161,8 @@ int main(int argc, char** argv)
 	int currWork;
 	char buf[1024*1024];
 	int c=0;
-	int reDvice=-1;
+	int reDevice=-1;
+	int sizeRead=1024*1024;
 	// read input lines to get command of type "OP <SECTOR> <COUNT>"
 	while (fgets(line, 1024, stdin) != NULL) {
 		assert(sscanf(line, "%s %d %s", operation, &sector, rep) == 3);
@@ -171,24 +173,29 @@ int main(int argc, char** argv)
 			dev_fd[sector / num_dev0][sector % num_dev1] = -1;
 		}
 		else if (!strcmp(operation, "REPAIR")) {
-			assert(!close(dev_fd[sector / num_dev0][sector % num_dev1]));
+			close(dev_fd[sector / num_dev0][sector % num_dev1]);
+			
 			dev_fd[sector / num_dev0][sector % num_dev1] = -1;
-			reDvice=open(rep,O_RDWR);
+			if((reDevice=open(rep,O_RDWR))<0)
+				continue;
 			if(reDevice>=0){
 				while(1) {
 					currWork=findWorkingDevice(sector / num_dev0);
 					if(currWork==-1){
-						printf("No working devices, can't repair");
-						closeAll();
-						exit(0);
+						printf("No working devices, can't copy\n");
+						dev_fd[sector / num_dev0][sector % num_dev1] = reDevice;
+						break;
 					}
-					if (size == read(dev_fd[sector / num_dev0][currWork], buf, 1024*1024)){
-						printf("Copied 1 mega");
-						c+=1024*1024;
+					lseek(dev_fd[sector / num_dev0][currWork],c,SEEK_SET);
+					if ((sizeRead = read(dev_fd[sector / num_dev0][currWork], buf, 1024*1024)) != -1){
+						
+						c+=sizeRead;
+						
 						
 					}
 					if(c==DEVICE_SIZE){//Done copying
 						dev_fd[sector / num_dev0][sector % num_dev1] = reDevice;
+						
 						break;
 					}
 				}
