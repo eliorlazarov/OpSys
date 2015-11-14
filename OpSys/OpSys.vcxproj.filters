@@ -18,10 +18,10 @@
     <ClCompile Include="HW1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="directio.c">
+    <ClCompile Include="raid10.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="raid10.c">
+    <ClCompile Include="myio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
