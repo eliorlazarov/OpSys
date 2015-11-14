@@ -10,22 +10,20 @@
 #include <errno.h>
 #include <string.h>
 
-
-
 static char buf[1024*1024] __attribute__ ((__aligned__ (4096)));
 
 void printError(char* c) {
 	printf("Error in %s:%s\n", c, strerror(errno));
 }
 
-int writeToFile(int fd){
+int writeToFile(int fd) {
 	char buf[1024 * 1024];
 	int readSize;
 	int i, j;
 	for (i = 0; i < 1024 * 1024; i++) {
 		buf[i] = random() % 256;
 	}
-	for ( j = 0; j < 128; j++) {
+	for (j = 0; j < 128; j++) {
 		readSize = write(fd, buf, 1024 * 1024);
 		if (readSize == -1) {
 			return errno;
@@ -39,18 +37,18 @@ int writeToFile(int fd){
 }
 
 
-int writeInRandomOffsets(int fd, int writeSize){
+int writeInRandomOffsets(int fd, int writeSize) {
 	int offset, size;
 	int i;
-	for ( i = 0; i < (1024 * 128) / writeSize; i++) {
+	for (i = 0; i < (1024 * 128) / writeSize; i++) {
 		offset = writeSize * 1024 * (random() % (128 * 1024 / writeSize)); //random offset depends on kb (if aligned)
-		
+
 		size = lseek(fd, offset, SEEK_SET);
 		if (size == -1) {
-			
+
 			return errno;
 		}
-		
+
 		size = write(fd, buf, writeSize * 1024);
 		if (size == -1) {
 			return errno;
@@ -59,7 +57,7 @@ int writeInRandomOffsets(int fd, int writeSize){
 			printf("not enough was written, quitting.\n");
 			exit(0);
 		}
-		
+
 	}
 	return 0;
 }
@@ -87,17 +85,17 @@ int main(int argc, char** argv) {
 		printf("Input file exists\n");
 		flag = 1;
 	}
-	int isBlock=0;
+	int isBlock = 0;
 	if (flag == 1) {
 		if (S_ISBLK(statbuf.st_mode)) {
 			printf("It is a block device\n");
-			isBlock=1;
+			isBlock = 1;
 		}
-		else{
+		else {
 			if (S_ISREG(statbuf.st_mode)) {
 				printf("It is a regular file\n");
 			}
-			
+
 			else if (S_ISLNK(statbuf.st_mode)) {
 				printf("It is a link\n");
 				return 0;
@@ -106,8 +104,8 @@ int main(int argc, char** argv) {
 				printf("It has links\n");
 				return 0;
 			}
-			
-			if (statbuf.st_size != 1024 * 1024 * 128 ) {
+
+			if (statbuf.st_size != 1024 * 1024 * 128) {
 				fd = open(argv[1], O_TRUNC | O_RDWR);
 				errCheck = writeToFile(fd);
 			}
@@ -123,23 +121,23 @@ int main(int argc, char** argv) {
 	}
 	else
 		close(fd);
-	
-	
-	for ( j = 0; j < 1024 * 1024; j++) {
+
+
+	for (j = 0; j < 1024 * 1024; j++) {
 		buf[j] = random() % 256;
 	}
-	double avgTime=0, avgT=0;
+	double avgTime = 0, avgT = 0;
 	int h;
 	direct = atoi(argv[2]);
 	writeSize = atoi(argv[3]);
-	for(h=0;h<5;h++){
+	for (h = 0; h < 5; h++) {
 		gettimeofday(&startTime, NULL);
-		
+
 		if (direct)
 			fd = open(argv[1], O_DIRECT | O_RDWR);
 		else
 			fd = open(argv[1], O_RDWR);
-		
+
 		if (fd == -1) {
 			printError("open");
 			return 0;
@@ -151,23 +149,23 @@ int main(int argc, char** argv) {
 		seconds = endTime.tv_sec - startTime.tv_sec;
 		useconds = endTime.tv_usec - startTime.tv_usec;
 		time = seconds + useconds / 1000000.0;
-		time*=1000;
-		mbPerSec = 128*1000/time;
-		avgTime+=time;
-		avgT+=mbPerSec;
+		time *= 1000;
+		mbPerSec = 128 * 1000 / time;
+		avgTime += time;
+		avgT += mbPerSec;
 	}
-	avgT/=5;
-	avgTime/=5;
-	
-	
+	avgT /= 5;
+	avgTime /= 5;
+
+
 	if (direct) {
 		printf("with O_direct: writeSize=%dKB , total time=%f MS , throughput=%f MB/sec\n", writeSize, avgTime, avgT);
 	}
-	
+
 	else {
 		printf("non-direct : writeSize=%dKB , total time=%f MS , throughput=%f MB/sec\n", writeSize, avgTime, avgT);
 	}
-	
-	
+
+
 	return 0;
 }
