@@ -97,8 +97,12 @@ int main(int argc, char** argv) {
 			printf("It is a block device\n");
 			return 0;
 		}
-		else if (S_ISDIR(statbuf.st_mode)) {
-			printf("It is a directory\n");
+		else if (S_ISLNK(statbuf.st_mode)) {
+			printf("It is a link\n");
+			return 0;
+		}
+		else if (statbuf.st_nlink > 2) {
+			printf("It has links\n");
 			return 0;
 		}
 
