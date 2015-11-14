@@ -148,18 +148,18 @@ int main(int argc, char** argv) {
 	if (writeSize == 1024) {
 
 
-		if (ALIGNED && direct) {
+		if (direct) {
 			printf("Aligned with O_direct: writeSize=1MB , total time=%f sec , throughput=%f MB/sec ", time, mbPerSec);
 		}
-		else if (ALIGNED == 0 && direct) {
-			printf("Unaligned with O_direct : writeSize=1MB , total time=%f sec , throughput=%f MB/sec ", time, mbPerSec);
-		}
-		else if (ALIGNED && direct == 0) {
+		//else if (ALIGNED == 0 && direct) {
+		//	printf("Unaligned with O_direct : writeSize=1MB , total time=%f sec , throughput=%f MB/sec ", time, mbPerSec);
+		//}
+		else if (direct == 0) {
 			printf("Aligned non-direct : writeSize=1MB , total time=%f sec , throughput=%f MB/sec ", time, mbPerSec);
 		}
-		else {
-			printf("Unaligned non-direct : writeSize=1MB , total time=%f sec , throughput=%f MB/sec ", time, mbPerSec);
-		}
+		//else {
+		//	printf("Unaligned non-direct : writeSize=1MB , total time=%f sec , throughput=%f MB/sec ", time, mbPerSec);
+		//}
 	}
 	else {
 		if (ALIGNED && direct) {
