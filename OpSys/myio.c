@@ -42,23 +42,17 @@ int writeInRandomOffsets(int fd, int writeSize) {
 	int i;
 	for (i = 0; i < (1024 * 128) / writeSize; i++) {
 		offset = writeSize * 1024 * (random() % (128 * 1024 / writeSize));
-
-		size = lseek(fd, offset, SEEK_SET);
-		if (size == -1) {
-
-			return errno;
-		}
-
+		
+		if(lseek(fd, offset, SEEK_SET) == -1)
+			return -1;
 		size = write(fd, buf, writeSize * 1024);
-		if (size == -1) {
-			return errno;
-		}
-		else if (size < writeSize * 1024) {
-			printf("not enough was written, quitting.\n");
+		if (size < writeSize * 1024) {
+			printf("not enough was written, quitting %d.\n",size);
 			exit(0);
 		}
-
+		
 	}
+	printf("%d\n",i);
 	return 0;
 }
 
@@ -95,7 +89,7 @@ int main(int argc, char** argv) {
 			if (S_ISREG(statbuf.st_mode)) {
 				printf("It is a regular file\n");
 			}
-
+			
 			else if (S_ISLNK(statbuf.st_mode)) {
 				printf("It is a link\n");
 				return 0;
@@ -104,7 +98,7 @@ int main(int argc, char** argv) {
 				printf("It has links\n");
 				return 0;
 			}
-
+			
 			if (statbuf.st_size != 1024 * 1024 * 128) {
 				fd = open(argv[1], O_TRUNC | O_RDWR);
 				errCheck = writeToFile(fd);
@@ -121,8 +115,8 @@ int main(int argc, char** argv) {
 	}
 	else
 		close(fd);
-
-
+	
+	
 	for (j = 0; j < 1024 * 1024; j++) {
 		buf[j] = random() % 256;
 	}
@@ -132,12 +126,12 @@ int main(int argc, char** argv) {
 	writeSize = atoi(argv[3]);
 	for (h = 0; h < 5; h++) {
 		gettimeofday(&startTime, NULL);
-
+		
 		if (direct)
 			fd = open(argv[1], O_DIRECT | O_RDWR);
 		else
 			fd = open(argv[1], O_RDWR);
-
+		
 		if (fd == -1) {
 			printError("open");
 			return 0;
@@ -156,16 +150,16 @@ int main(int argc, char** argv) {
 	}
 	avgT /= 5;
 	avgTime /= 5;
-
-
+	
+	
 	if (direct) {
 		printf("with O_direct: writeSize=%dKB , total time=%f MS , throughput=%f MB/sec\n", writeSize, avgTime, avgT);
 	}
-
+	
 	else {
 		printf("non-direct : writeSize=%dKB , total time=%f MS , throughput=%f MB/sec\n", writeSize, avgTime, avgT);
 	}
-
-
+	
+	
 	return 0;
 }
