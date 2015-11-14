@@ -18,17 +18,17 @@ void printError(char* c) {
 
 int writeToFile(int fd) {
 	char buf[1024 * 1024];
-	int readSize;
+	int writeSize;
 	int i, j;
 	for (i = 0; i < 1024 * 1024; i++) {
 		buf[i] = random() % 256;
 	}
 	for (j = 0; j < 128; j++) {
-		readSize = write(fd, buf, 1024 * 1024);
-		if (readSize == -1) {
+		writeSize = write(fd, buf, 1024 * 1024);
+		if (writeSize == -1) {
 			return errno;
 		}
-		else if (readSize < 1024 * 1024) {
+		else if (writeSize < 1024 * 1024) {
 			printf("PROBLEM: WROTE LESS THAN 1MB");
 			exit(0);
 		}
@@ -41,7 +41,7 @@ int writeInRandomOffsets(int fd, int writeSize) {
 	int offset, size;
 	int i;
 	for (i = 0; i < (1024 * 128) / writeSize; i++) {
-		offset = writeSize * 1024 * (random() % (128 * 1024 / writeSize)); //random offset depends on kb (if aligned)
+		offset = writeSize * 1024 * (random() % (128 * 1024 / writeSize));
 
 		size = lseek(fd, offset, SEEK_SET);
 		if (size == -1) {
