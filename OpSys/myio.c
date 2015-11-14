@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <string.h>
 
-#define ALIGNED 1 //equals 1 if writing in aligned offset and 0 if unaligned
+
 
 static char buf[1024*1024] __attribute__ ((__aligned__ (4096)));
 
@@ -21,10 +21,11 @@ void printError(char* c) {
 int writeToFile(int fd){
 	char buf[1024 * 1024];
 	int readSize;
-	for (int i = 0; i < 1024 * 1024; i++) {
+	int i, j;
+	for (i = 0; i < 1024 * 1024; i++) {
 		buf[i] = random() % 256;
 	}
-	for (int i = 0; i < 128; i++) {
+	for ( j = 0; j < 128; j++) {
 		readSize = write(fd, buf, 1024 * 1024);
 		if (readSize == -1) {
 			return errno;
@@ -38,15 +39,12 @@ int writeToFile(int fd){
 }
 
 
-int writeInRandomOffsets(int fd, int writeSize, int aligned){
+int writeInRandomOffsets(int fd, int writeSize){
 	int offset, size;
-	for (int i = 0; i < (1024 * 128) / writeSize; i++) {
-		if (aligned) {
-			offset = writeSize * 1024 * (random() % (128 * 1024 / writeSize)); //random offset depends on kb (if aligned)
-		}
-		else {
-			offset = random() % (128 * 1024 * 1024 - writeSize * 1024); //random unaligned offset
-		}
+	int i;
+	for ( i = 0; i < (1024 * 128) / writeSize; i++) {
+		offset = writeSize * 1024 * (random() % (128 * 1024 / writeSize)); //random offset depends on kb (if aligned)
+		
 		size = lseek(fd, offset, SEEK_SET);
 		if (size == -1) {
 			
@@ -74,6 +72,7 @@ int main(int argc, char** argv) {
 	double mbPerSec, time;
 	int errCheck = stat(argv[1], &statbuf), flag = 0, fd;
 	int direct, writeSize;
+	int j;
 	if (errCheck == -1)
 	{
 		if (errno == ENOENT) {
@@ -123,8 +122,8 @@ int main(int argc, char** argv) {
 		close(fd);
 
 
-	for (int i = 0; i < 1024 * 1024; i++) {
-		buf[i] = random() % 256;
+	for ( j = 0; j < 1024 * 1024; j++) {
+		buf[j] = random() % 256;
 	}
 
 	gettimeofday(&startTime, NULL);
@@ -139,7 +138,7 @@ int main(int argc, char** argv) {
 		printError("open");
 		return 0;
 	}
-	if (writeInRandomOffsets(fd, writeSize, ALIGNED) == -1)
+	if (writeInRandomOffsets(fd, writeSize) == -1)
 		return 0;
 	close(fd);
 	gettimeofday(&endTime, NULL);
@@ -166,18 +165,14 @@ int main(int argc, char** argv) {
 		//}
 	}
 	else {
-		if (ALIGNED && direct) {
+		if ( direct) {
 			printf("Aligned with O_direct: writeSize=%dKB , total time=%f sec , throughput=%f MB/sec ", writeSize, time, mbPerSec);
 		}
-		else if (ALIGNED == 0 && direct) {
-			printf("Unaligned with O_direct : writeSize=%dKB , total time=%f sec , throughput=%f MB/sec ", writeSize, time, mbPerSec);
-		}
-		else if (ALIGNED && direct == 0) {
+		
+		else if (direct == 0) {
 			printf("Aligned non-direct : writeSize=%dKB , total time=%f sec , throughput=%f MB/sec ", writeSize, time, mbPerSec);
 		}
-		else {
-			printf("Unaligned non-direct : writeSize=%dKB , total time=%f sec , throughput=%f MB/sec ", writeSize, time, mbPerSec);
-		}
+		
 	}
 
 	return 0;

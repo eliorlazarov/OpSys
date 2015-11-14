@@ -24,7 +24,8 @@ int		**dev_fd;
 
 
 int findWorkingDevice(int dev0) {
-	for (int i = 0; i < num_dev1; i++) {
+	int i;
+	for ( i = 0; i < num_dev1; i++) {
 		if (dev_fd[dev0][i] >= 0)
 			return i;
 	}
@@ -34,13 +35,13 @@ int findWorkingDevice(int dev0) {
 
 void closeAll() {
 	int i, j;
-	for (int i = 0; i < num_dev0; ++i) {
-		for (int j = 0; j < num_dev1; j++) {
+	for ( i = 0; i < num_dev0; ++i) {
+		for ( j = 0; j < num_dev1; j++) {
 			if (dev_fd[i][j] > 0)
 				close(dev_fd[i][j]);
 		}
 	}
-	for (int i = 0; i < num_dev0; i++)
+	for ( i = 0; i < num_dev0; i++)
 		free(dev_fd[i]);
 	free(dev_fd);
 }
@@ -48,7 +49,7 @@ void closeAll() {
 void do_raid0_rw(char* operation, int sector, int count)
 {
 	int i = sector;
-	
+	int j;
 	while (i < sector + count)
 	{
 		// find the relevant device for current sector
@@ -106,8 +107,9 @@ void do_raid0_rw(char* operation, int sector, int count)
 			
 			
 		}
+		
 		else if (!strcmp(operation, "WRITE"))
-			for (int j = 0; j < num_dev1; j++) {
+			for ( j = 0; j < num_dev1; j++) {
 				if (dev_fd[dev_num][j] >= 0)
 					if (size != write(dev_fd[dev_num][j], buf, size)) {
 						printf("Something went wrong while writing\n");
@@ -127,7 +129,7 @@ int main(int argc, char** argv)
 {
 	assert(argc > 2);
 	
-	int i;
+	int i, j;
 	char line[1024];
 	char rep[1024];
 	// number of devices == number of arguments (ignore 1st)
@@ -141,11 +143,11 @@ int main(int argc, char** argv)
 	
 	
 	dev_fd = (int**)malloc(num_dev0*sizeof(int*));
-	for (int i = 0; i < num_dev0; i++)
+	for ( i = 0; i < num_dev0; i++)
 		dev_fd[i] = (int*)malloc(num_dev1*sizeof(int));
 	// open all devices
 	for (i = 0; i < num_dev0; i++) {
-		for (int j = 0; j < num_dev1; j++) {
+		for ( j = 0; j < num_dev1; j++) {
 			printf("Opening device %d: %s\n", i*num_dev1 + j, argv[i*num_dev1 + j + 2]);
 			
 			dev_fd[i][j] = open(argv[i*num_dev1 + j + 2], O_RDWR);
