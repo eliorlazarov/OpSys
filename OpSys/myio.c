@@ -12,16 +12,14 @@
 
 static char buf[1024*1024] __attribute__ ((__aligned__ (4096)));
 
-void printError(char* c) {
-	printf("Error in %s:%s\n", c, strerror(errno));
-}
-
 int writeToFile(int fd) {
 	char buf[1024 * 1024];
 	int writeSize;
 	int i, j;
+	
+	
 	for (i = 0; i < 1024 * 1024; i++) {
-		buf[i] = random() % 256;
+		buf[i] = rand() % 256;
 	}
 	for (j = 0; j < 128; j++) {
 		writeSize = write(fd, buf, 1024 * 1024);
@@ -29,7 +27,7 @@ int writeToFile(int fd) {
 			return errno;
 		}
 		else if (writeSize < 1024 * 1024) {
-			printf("PROBLEM: WROTE LESS THAN 1MB");
+			printf("Wrote less than 1MB, quiting\n");
 			exit(0);
 		}
 	}
@@ -38,21 +36,27 @@ int writeToFile(int fd) {
 
 
 int writeInRandomOffsets(int fd, int writeSize) {
-	int offset, size;
+	long int offset, size;
 	int i;
-	for (i = 0; i < (1024 * 128) / writeSize; i++) {
-		offset = writeSize * 1024 * (random() % (128 * 1024 / writeSize));
-		
-		if(lseek(fd, offset, SEEK_SET) == -1)
+	int c=0;
+	
+	for (i = 0; i < ((1024 * 128) / writeSize); i++) {
+		offset = writeSize * 1024 * (rand() % ((128 * 1024) / writeSize));
+		//if (i == 25)
+		//printf("%ld,%ld",random(),offset/(1024*writeSize));
+		if(lseek(fd, offset, SEEK_SET) == -1){
+			printf("There has been a problem while using lseek, quiting\n");
 			return -1;
+		}
 		size = write(fd, buf, writeSize * 1024);
+		c++;
 		if (size < writeSize * 1024) {
-			printf("not enough was written, quitting %d.\n",size);
+			printf("not enough was written, quitting.\n");
 			exit(0);
 		}
 		
 	}
-	printf("%d\n",i);
+	printf("%ld\n",size);
 	return 0;
 }
 
@@ -61,17 +65,18 @@ int main(int argc, char** argv) {
 	struct timeval startTime, endTime;
 	struct stat statbuf;
 	long seconds, useconds;
-	double mbPerSec, time;
+	double mbPerSec, time1;
 	int errCheck = stat(argv[1], &statbuf), flag = 0, fd;
 	int direct, writeSize;
 	int j;
+	srand(time(NULL));
 	if (errCheck == -1)
 	{
 		if (errno == ENOENT) {
 			printf("Input file does not exist\n");
 		}
 		else {
-			printError("stat");
+			printf("Error in stat\n");
 			return errno;
 		}
 	}
@@ -110,7 +115,7 @@ int main(int argc, char** argv) {
 		errCheck = writeToFile(fd);
 	}
 	if (errCheck == -1) {
-		printError("write");
+		printf("Error in write\n");
 		return 0;
 	}
 	else
@@ -118,7 +123,7 @@ int main(int argc, char** argv) {
 	
 	
 	for (j = 0; j < 1024 * 1024; j++) {
-		buf[j] = random() % 256;
+		buf[j] = rand() % 256;
 	}
 	double avgTime = 0, avgT = 0;
 	int h;
@@ -133,7 +138,7 @@ int main(int argc, char** argv) {
 			fd = open(argv[1], O_RDWR);
 		
 		if (fd == -1) {
-			printError("open");
+			printf("Error in open\n");
 			return 0;
 		}
 		if (writeInRandomOffsets(fd, writeSize) == -1)
@@ -142,10 +147,10 @@ int main(int argc, char** argv) {
 		gettimeofday(&endTime, NULL);
 		seconds = endTime.tv_sec - startTime.tv_sec;
 		useconds = endTime.tv_usec - startTime.tv_usec;
-		time = seconds + useconds / 1000000.0;
-		time *= 1000;
-		mbPerSec = 128 * 1000 / time;
-		avgTime += time;
+		time1 = seconds + useconds / 1000000.0;
+		time1 *= 1000;
+		mbPerSec = 128 * 1000 / time1;
+		avgTime += time1;
 		avgT += mbPerSec;
 	}
 	avgT /= 5;
