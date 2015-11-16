@@ -196,13 +196,22 @@ int main(int argc, char** argv)
 						dev_fd[sector / num_dev0][sector % num_dev1] = reDevice;
 						break;
 					}
-					if (lseek(dev_fd[sector / num_dev0][currWork], c, SEEK_SET) == -1)
+					if (lseek(dev_fd[sector / num_dev0][currWork], c, SEEK_SET) == -1){
+						printf("lseek failed, killing the current device");
+						close(dev_fd[sector / num_dev0][currWork]);
+						dev_fd[sector / num_dev0][currWork] = -1;
 						continue;
+					}
 					if ((sizeRead = read(dev_fd[sector / num_dev0][currWork], buf, 1024 * 1024)) != -1) {
 						
 						c += sizeRead;
 						
 						
+					}
+					else{
+						printf("Error reading, killing the current device");	
+						close(dev_fd[sector / num_dev0][currWork]);
+						dev_fd[sector / num_dev0][currWork] = -1;
 					}
 					if (c == DEVICE_SIZE) {//Done copying
 						dev_fd[sector / num_dev0][sector % num_dev1] = reDevice;
