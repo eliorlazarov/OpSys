@@ -97,8 +97,8 @@ void do_raid0_rw(char* operation, int sector, int count)
 					defaultDev = findWorkingDevice(dev_num);
 					if (defaultDev == -1)
 					{
-						printf("No working drives\n");
-						break;
+						printf("No working drives, can't continue\n");
+						return;
 					}
 				}
 				else {
