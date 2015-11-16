@@ -82,7 +82,11 @@ void do_raid0_rw(char* operation, int sector, int count)
 		assert(size <= BUFFER_SIZE);
 		assert(offset + size <= DEVICE_SIZE);
 		// seek in relevant device
-		assert(offset == lseek(dev_fd[dev_num][defaultDev], offset, SEEK_SET));
+		if (offset != lseek(dev_fd[dev_num][defaultDev], offset, SEEK_SET)) {
+			printf("There's been an error while using lseek\n");
+			close(dev_fd[dev_num][defaultDev]);
+			dev_fd[dev_num][defaultDev] = -1;
+		}
 		
 		if (!strcmp(operation, "READ")) {
 			while (1) {
@@ -168,11 +172,14 @@ int main(int argc, char** argv)
 	int sizeRead = 1024 * 1024;
 	// read input lines to get command of type "OP <SECTOR> <COUNT>"
 	while (fgets(line, 1024, stdin) != NULL) {
-		assert(sscanf(line, "%s %d %s", operation, &sector, rep) == 3);
+		if (sscanf(line, "%s %d %s", operation, &sector, rep) != 3) {
+			printf("Not enough arguments, try again.\n");
+			continue;
+		}
 		
 		// KILL specified device
 		if (!strcmp(operation, "KILL")) {
-			assert(!close(dev_fd[sector / num_dev0][sector % num_dev1]));
+			close(dev_fd[sector / num_dev0][sector % num_dev1]);
 			dev_fd[sector / num_dev0][sector % num_dev1] = -1;
 		}
 		else if (!strcmp(operation, "REPAIR")) {

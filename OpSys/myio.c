@@ -61,7 +61,9 @@ int writeInRandomOffsets(int fd, int writeSize) {
 }
 
 int main(int argc, char** argv) {
-	assert(argc == 4);
+	if (argc != 4) {
+		printf("Not enough arguments, quitting\n");
+	}
 	struct timeval startTime, endTime;
 	struct stat statbuf;
 	long seconds, useconds;
