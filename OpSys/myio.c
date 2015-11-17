@@ -56,7 +56,6 @@ int writeInRandomOffsets(int fd, int writeSize) {
 		}
 		
 	}
-	printf("%ld\n",size);
 	return 0;
 }
 
