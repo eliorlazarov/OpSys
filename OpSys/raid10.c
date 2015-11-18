@@ -138,9 +138,9 @@ int main(int argc, char** argv)
 	char rep[1024];
 	// number of devices == number of arguments (ignore 1st)
 	
-	num_dev0 = atoi(argv[1]);
+	num_dev1 = atoi(argv[1]);
 	
-	num_dev1 = (argc - 2) / num_dev0;
+	num_dev0 = (argc - 2) / num_dev1;
 	
 	int _dev_fd[num_dev0][num_dev1];
 	
@@ -207,6 +207,13 @@ int main(int argc, char** argv)
 						c += sizeRead;
 						
 						
+					}
+					if(write(reDevice,buf,1024*1024) < 0){
+						//Consider the new device as faulty, just replace it and break.
+						printf("Error writing to the new device, aborting and replacing as-is.\n");
+						dev_fd[sector / num_dev0][sector % num_dev1] = reDevice;
+						
+						break;
 					}
 					else{
 						printf("Error reading, killing the current device");	
