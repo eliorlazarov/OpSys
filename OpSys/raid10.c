@@ -9,7 +9,7 @@
 #include <errno.h> 
 #include <string.h>
 #include <unistd.h>
-#define DEVICE_SIZE (1024*1024*20) // assume all devices identical in size
+#define DEVICE_SIZE (1024*1024*10) // assume all devices identical in size
 
 #define SECTOR_SIZE 512
 #define SECTORS_PER_BLOCK 4
@@ -86,6 +86,7 @@ void do_raid0_rw(char* operation, int sector, int count)
 			printf("There's been an error while using lseek\n");
 			close(dev_fd[dev_num][defaultDev]);
 			dev_fd[dev_num][defaultDev] = -1;
+			continue;
 		}
 		
 		if (!strcmp(operation, "READ")) {
@@ -122,7 +123,7 @@ void do_raid0_rw(char* operation, int sector, int count)
 					}
 					else
 						printf("Operation on device %d, sector %d-%d\n",
-						       dev_num*num_dev1 + defaultDev, sector_start, sector_end);
+						       dev_num*num_dev1 + j, sector_start, sector_end);
 			}
 			i += num_sectors;
 	}
@@ -150,7 +151,8 @@ int main(int argc, char** argv)
 	for ( i = 0; i < num_dev0; i++)
 		dev_fd[i] = (int*)malloc(num_dev1*sizeof(int));
 	// open all devices
-	for (i = 0; i < num_dev0; i++) {
+	num_dev0--;
+	for (i = 0; i <= num_dev0; i++) {
 		for ( j = 0; j < num_dev1; j++) {
 			printf("Opening device %d: %s\n", i*num_dev1 + j, argv[i*num_dev1 + j + 2]);
 			
@@ -160,7 +162,7 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-	
+	num_dev0++;
 	// vars for parsing input line
 	char operation[20];
 	int sector;
@@ -179,49 +181,49 @@ int main(int argc, char** argv)
 		
 		// KILL specified device
 		if (!strcmp(operation, "KILL")) {
-			close(dev_fd[sector / num_dev0][sector % num_dev1]);
-			dev_fd[sector / num_dev0][sector % num_dev1] = -1;
+			close(dev_fd[(sector / num_dev1)][sector % num_dev1]);
+			dev_fd[(sector / num_dev1)][sector % num_dev1] = -1;
 		}
 		else if (!strcmp(operation, "REPAIR")) {
-			close(dev_fd[sector / num_dev0][sector % num_dev1]);
+			close(dev_fd[sector / num_dev1][sector % num_dev1]);
 			
-			dev_fd[sector / num_dev0][sector % num_dev1] = -1;
+			dev_fd[sector / num_dev1][sector % num_dev1] = -1;
 			if ((reDevice = open(rep, O_RDWR)) < 0)
 				continue;
 			if (reDevice >= 0) {
 				while (1) {
-					currWork = findWorkingDevice(sector / num_dev0);
+					currWork = findWorkingDevice(sector / num_dev1);
 					if (currWork == -1) {
 						printf("No working devices, can't copy\n");
-						dev_fd[sector / num_dev0][sector % num_dev1] = reDevice;
+						dev_fd[sector / num_dev1][sector % num_dev1] = reDevice;
 						break;
 					}
-					if (lseek(dev_fd[sector / num_dev0][currWork], c, SEEK_SET) == -1){
-						printf("lseek failed, killing the current device");
-						close(dev_fd[sector / num_dev0][currWork]);
-						dev_fd[sector / num_dev0][currWork] = -1;
+					if (lseek(dev_fd[sector / num_dev1][currWork], c, SEEK_SET) == -1){
+						printf("lseek failed, killing the current device\n");
+						close(dev_fd[sector / num_dev1][currWork]);
+						dev_fd[sector / num_dev1][currWork] = -1;
 						continue;
 					}
-					if ((sizeRead = read(dev_fd[sector / num_dev0][currWork], buf, 1024 * 1024)) != -1) {
-						
-						c += sizeRead;
-						
-						
+					if ((sizeRead = read(dev_fd[sector / num_dev1][currWork], buf, 1024 * 1024)) == -1) {
+						printf("Error reading, killing the current device\n");	
+						close(dev_fd[sector / num_dev1][currWork]);
+						dev_fd[sector / num_dev1][currWork] = -1;
+						continue;
 					}
+					
 					if(write(reDevice,buf,1024*1024) < 0){
 						//Consider the new device as faulty, just replace it and break.
 						printf("Error writing to the new device, aborting and replacing as-is.\n");
-						dev_fd[sector / num_dev0][sector % num_dev1] = reDevice;
+						
+						dev_fd[sector / num_dev1][sector % num_dev1] = reDevice;
 						
 						break;
 					}
 					else{
-						printf("Error reading, killing the current device");	
-						close(dev_fd[sector / num_dev0][currWork]);
-						dev_fd[sector / num_dev0][currWork] = -1;
+						c += sizeRead;	
 					}
 					if (c == DEVICE_SIZE) {//Done copying
-						dev_fd[sector / num_dev0][sector % num_dev1] = reDevice;
+						dev_fd[sector / num_dev1][sector % num_dev1] = reDevice;
 						
 						break;
 					}
