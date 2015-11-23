@@ -24,5 +24,14 @@
     <ClCompile Include="myio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="copy_tool.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="reader_pipe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="writer_pipe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

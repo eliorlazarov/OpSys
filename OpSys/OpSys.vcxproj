@@ -11,9 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="copy_tool.c" />
     <ClCompile Include="myio.c" />
     <ClCompile Include="HW1.c" />
     <ClCompile Include="raid10.c" />
+    <ClCompile Include="reader_pipe.c" />
+    <ClCompile Include="writer_pipe.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{024A7A26-382E-4DC2-87FE-9BEB3359567D}</ProjectGuid>
