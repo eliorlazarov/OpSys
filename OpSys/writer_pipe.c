@@ -31,19 +31,19 @@ int main(int argc, char** argv) {
 	assert(argc == 2);
 	struct stat statbuf;
 	char line[1024];
-
+	
 	struct sigaction sig;
 	sig.sa_handler = handler1;
 	sigaction(SIGINT, &sig, NULL);
 	sigaction(SIGTERM, &sig, NULL);
 	signal(SIGPIPE, handler2);
 	path = argv[1];
-
+	
 	fd = open(path, O_WRONLY);
 	if (fd < 0) {
 		if (errno == ENOENT) {
 			
-			if (mkfifo(path, S_IWUSR) < 0) {
+			if (mkfifo(path, S_IWUSR | S_IRUSR |S_IRGRP | S_IROTH) < 0) {
 				printErr("mkfifo");
 				return -1;
 			}
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 			return -1;
 		}
 	}
-
+	
 	
 	if (stat(path, &statbuf) < 0) {
 		printErr("stat");
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 	}
 	if (!(S_ISFIFO(statbuf.st_mode))) {
 		assert(unlink(path) >= 0);
-		if (mkfifo(path, S_IWUSR) < 0) {
+		if (mkfifo(path, S_IWUSR | S_IRUSR |S_IRGRP | S_IROTH) < 0) {
 			printErr("mkfifo");
 			return -1;
 		}
@@ -73,9 +73,9 @@ int main(int argc, char** argv) {
 			printErr("open");
 			return -1;
 		}
-
+		
 	}
-
+	
 	while (fgets(line, 1024, stdin) != NULL) {
 		if (write(fd, line, 1024) < 0 && errno != EPIPE) {
 			printErr("write");
@@ -91,5 +91,5 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 	return 0;
-
+	
 }
