@@ -16,16 +16,18 @@ int main(int argc, char** argv) {
 	int fd;
 	char line[1024];
 	struct sigaction prev;
-
-
+	
+	
 	while (1) {
-		while (fd = open(argv[1], O_RDONLY) < 0) {
+		fd = open(argv[1], O_RDONLY);
+		while (fd  < 0) {
 			if (errno == ENOENT) {
 				sleep(1);
 				fd = open(argv[1], O_RDONLY);
 			}
 			else {
 				printf("Error opening file, quiting.\n");
+				printf("%s\n",strerror(errno));
 				return -1;
 			}
 		}
@@ -39,9 +41,8 @@ int main(int argc, char** argv) {
 		}
 		sigaction(SIGINT, NULL, &prev);
 		sigaction(SIGTERM, NULL, &prev);
-		while (read(fd, line, 1024) > 0) {
+		while (read(fd, line, 1024) > 0) 
 			printf("%s", line);
-		}
 		if (close(fd) < 0) {
 			printf("Error, close file failed. quiting\n");
 			sigaction(SIGINT, &prev, NULL);
@@ -52,5 +53,5 @@ int main(int argc, char** argv) {
 		sigaction(SIGTERM, &prev, NULL);
 	}
 	return 0;
-
+	
 }
