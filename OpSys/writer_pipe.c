@@ -20,7 +20,7 @@ void handler1(int signum) {
 }
 
 void handler2(int signum) {
-	printf("Tried to write to a closed pipe (FIFO file has no reader)\n");
+	printf("Tried to write to a closed pipe\n");
 }
 
 void printErr(char* c) {
@@ -36,7 +36,10 @@ int main(int argc, char** argv) {
 	sig.sa_handler = handler1;
 	sigaction(SIGINT, &sig, NULL);
 	sigaction(SIGTERM, &sig, NULL);
-	signal(SIGPIPE, handler2);
+
+	struct sigaction action_Pipe;
+	action_Pipe.sa_handler = handler2;
+	sigaction(SIGPIPE, &action_Pipe, NULL);
 	path = argv[1];
 	
 	fd = open(path, O_WRONLY);
