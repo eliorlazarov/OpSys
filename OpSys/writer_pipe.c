@@ -13,86 +13,72 @@
 int fd;
 char *path;
 
-void handler1(int signum) {
-	unlink(path);
-	close(fd);
-	exit(1);
+void IntTermHandler(int signum){
+
+	assert(unlink(path) >= 0); // removes the FIFO file
+	assert(close(fd) >= 0); // closes the FIFO file
+	exit(-1);
 }
 
-void handler2(int signum) {
-	printf("Tried to write to a closed pipe\n");
+void PipeHandler(int signum){
+	printf("Writing to a closed pipe.\n");
 }
 
-void printErr(char* c) {
-	printf("Error in %s:%s\n", c, strerror(errno));
-}
-
-int main(int argc, char** argv) {
-	assert(argc == 2);
-	struct stat statbuf;
-	char line[1024];
+int main(int argc, char** argv){
 	
-	struct sigaction sig;
-	sig.sa_handler = handler1;
-	sigaction(SIGINT, &sig, NULL);
-	sigaction(SIGTERM, &sig, NULL);
+	assert(argc == 2);
+	struct stat stat_buf;
+	path = argv[1];
+
+	struct sigaction action_IntTerm;
+	action_IntTerm.sa_handler = IntTermHandler;
+	sigaction(SIGINT, &action_IntTerm, NULL);
+	sigaction(SIGTERM, &action_IntTerm, NULL);
 
 	struct sigaction action_Pipe;
-	action_Pipe.sa_handler = handler2;
+	action_Pipe.sa_handler = PipeHandler;
 	sigaction(SIGPIPE, &action_Pipe, NULL);
-	path = argv[1];
-	
-	fd = open(path, O_WRONLY);
-	if (fd < 0) {
-		if (errno == ENOENT) {
+
+	fd = open(path, O_WRONLY, S_IRWXO|S_IRWXG|S_IRWXU);
+	if(fd < 0){ 
+		if(errno == ENOENT){ // file does not exist
 			
-			if (mkfifo(path, S_IWUSR | S_IRUSR |S_IRGRP | S_IROTH) < 0) {
-				printErr("mkfifo");
+			if(mkfifo(path, S_IRWXO|S_IRWXG|S_IRWXU) < 0){ // error occurred
+				printf("Error occurred.\n");
 				return -1;
 			}
-			if ((fd = open(path, O_WRONLY)) == -1) {
-				printErr("open");
+			fd = open(path, O_WRONLY, S_IRWXO|S_IRWXG|S_IRWXU);
+		}
+		else{
+			printf("Error occurred.\n");
+			return -1;
+		}
+	}
+	else{ // file exists
+		if(fstat(fd, &stat_buf) < 0){
+			printf("Error occurred.\n");
+			return -1;
+		}
+		if ((stat_buf.st_mode & S_IFMT) != S_IFIFO) { // not a FIFO file
+			
+			assert(unlink(path) >= 0);
+
+			if(mkfifo(path, S_IRWXO|S_IRWXG|S_IRWXU) < 0){ // error occurred
+				printf("Error occurred.\n");
 				return -1;
 			}
-		}
-		else {
-			printErr("open");
-			return -1;
-		}
+			fd = open(path, O_WRONLY, S_IRWXO|S_IRWXG|S_IRWXU);	
+        }
 	}
-	
-	
-	if (stat(path, &statbuf) < 0) {
-		printErr("stat");
-		return -1;
-	}
-	if (!(S_ISFIFO(statbuf.st_mode))) {
-		assert(unlink(path) >= 0);
-		if (mkfifo(path, S_IWUSR | S_IRUSR |S_IRGRP | S_IROTH) < 0) {
-			printErr("mkfifo");
-			return -1;
-		}
-		if (fd = open(path, O_WRONLY) < 0) {
-			printErr("open");
-			return -1;
-		}
-		
-	}
-	
+
+	char line[1024];
+
 	while (fgets(line, 1024, stdin) != NULL) {
-		if (write(fd, line, 1024) < 0 && errno != EPIPE) {
-			printErr("write");
-			return -1;
-		}
+		write(fd, line, 1024);
 	}
-	if (unlink(path) < 0) {
-		printErr("unlink");
-		return -1;
-	}
-	if (close(fd) < 0) {
-		printErr("close");
-		return -1;
-	}
+
+	assert(unlink(path) >= 0); // removes the FIFO file
+	assert(close(fd) >= 0); // closes the FIFO file
+
 	return 0;
-	
 }
