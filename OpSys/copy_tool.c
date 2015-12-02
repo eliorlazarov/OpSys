@@ -33,17 +33,19 @@ int main(int argc, char** argv) {
 	fd2 = open(argv[2], O_CREAT | O_EXCL | O_RDWR, S_IRWXO | S_IRWXG | S_IRWXU);
 	
 	if (fd2 < 0 && errno == EEXIST) {
-		printf("The destination file already exists!\n");
+		printf("Error: %s\n", strerror(errno));
 		return -1;
 	}
 	else if (fd2 < 0) {
 		printf("Error opening file, quiting.\n");
+		printf("%s\n", strerror(errno));
 		return -1;
 	}
 	;
 	
 	if ((size = lseek(fd1, 1, SEEK_END)) == -1) {
 		printf("Error while using lseek, quiting.\n");
+		printf("%s\n", strerror(errno));
 		close(fd1);
 		close(fd2);
 		unlink(argv[2]);
@@ -55,6 +57,7 @@ int main(int argc, char** argv) {
 		close(fd2);
 		unlink(argv[2]);
 		printf("Error using truncate, quiting.\n");
+		printf("%s\n", strerror(errno));
 	}
 	
 	arr1 = (char*)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd1, 0);
@@ -64,6 +67,7 @@ int main(int argc, char** argv) {
 		close(fd2);
 		unlink(argv[2]);
 		printf("Error mmapping the source file, quiting.\n");
+		printf("%s\n", strerror(errno));
 		return -1;
 	}
 	
@@ -74,6 +78,7 @@ int main(int argc, char** argv) {
 		close(fd2);
 		unlink(argv[2]);
 		printf("Error mmapping the destination file, quiting.\n");
+		printf("%s\n", strerror(errno));
 		return -1;
 	}
 	
@@ -83,6 +88,7 @@ int main(int argc, char** argv) {
 	
 	if (munmap(arr1, size) == -1) {
 		printf("Error un-mmapping the source file\n");
+		printf("%s\n", strerror(errno));
 		close(fd1);
 		close(fd2);
 		unlink(argv[2]);
@@ -92,6 +98,7 @@ int main(int argc, char** argv) {
 	
 	if (munmap(arr2, size) == -1) {
 		printf("Error un-mmapping the destination file\n");
+		printf("%s\n", strerror(errno));
 		close(fd1);
 		close(fd2);
 		unlink(argv[2]);
@@ -100,11 +107,13 @@ int main(int argc, char** argv) {
 	
 	if (close(fd1) < 0) {
 		printf("Error closing, quiting.\n");
+		printf("%s\n", strerror(errno));
 		return -1;
 	}
 	
 	if (close(fd2) < 0) {
 		printf("Error closing, quiting.\n");
+		printf("%s\n", strerror(errno));
 		return -1;
 	}
 	return 0;
