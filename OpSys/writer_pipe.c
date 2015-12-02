@@ -45,18 +45,21 @@ int main(int argc, char** argv){
 			
 			if(mkfifo(path, S_IRWXO|S_IRWXG|S_IRWXU) < 0){ // error occurred
 				printf("Error occurred.\n");
+				printf("%s\n", strerror(errno));
 				return -1;
 			}
 			fd = open(path, O_WRONLY, S_IRWXO|S_IRWXG|S_IRWXU);
 		}
 		else{
 			printf("Error occurred.\n");
+			printf("%s\n", strerror(errno));
 			return -1;
 		}
 	}
 	else{ // file exists
 		if(fstat(fd, &stat_buf) < 0){
 			printf("Error occurred.\n");
+			printf("%s\n", strerror(errno));
 			return -1;
 		}
 		if ((stat_buf.st_mode & S_IFMT) != S_IFIFO) { // not a FIFO file
@@ -65,6 +68,7 @@ int main(int argc, char** argv){
 
 			if(mkfifo(path, S_IRWXO|S_IRWXG|S_IRWXU) < 0){ // error occurred
 				printf("Error occurred.\n");
+				printf("%s\n", strerror(errno));
 				return -1;
 			}
 			fd = open(path, O_WRONLY, S_IRWXO|S_IRWXG|S_IRWXU);	

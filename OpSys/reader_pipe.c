@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
 		}
 		if (stat(argv[1], &statbuf) < 0) {
 			printf("Error- using stat failed. quiting.\n");
+			printf("%s\n", strerror(errno));
 			return -1;
 		}
 		if (!(S_ISFIFO(statbuf.st_mode))) {
@@ -45,6 +46,7 @@ int main(int argc, char** argv) {
 			printf("%s", line);
 		if (close(fd) < 0) {
 			printf("Error, close file failed. quiting\n");
+			printf("%s\n", strerror(errno));
 			sigaction(SIGINT, &prev, NULL);
 			sigaction(SIGTERM, &prev, NULL);
 			return -1;
