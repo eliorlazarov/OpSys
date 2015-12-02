@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 	int fd;
 	char line[1024];
 	struct sigaction prev;
-	
+	prev.sa_handler = SIG_IGN;
 	
 	while (1) {
 		fd = open(argv[1], O_RDONLY);
