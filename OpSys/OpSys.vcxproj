@@ -12,8 +12,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="copy_tool.c" />
+    <ClCompile Include="input.c" />
     <ClCompile Include="myio.c" />
     <ClCompile Include="HW1.c" />
+    <ClCompile Include="myshell.c" />
     <ClCompile Include="raid10.c" />
     <ClCompile Include="reader_pipe.c" />
     <ClCompile Include="writer_pipe.c" />
