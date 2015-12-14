@@ -10,29 +10,32 @@
 #include <string.h>
 #include <signal.h>
 #include "input.c"
+
 int contains(int count, char** arglist, char let) {
 	int i;
 	for (i = 0; i < count; i++) {
 		if (arglist[i][0] == let)
-			return 1;
+			return i;
 	}
 	return 0;
 }
 
 int process_arglist(int count, char** arglist) {
+	int i;
 	int conAmp = contains(count, arglist, '&');
 	int conPipe = contains(count, arglist, '|');
-	if(conPipe+conAmp==0)
-		execute(arglist, conAmp, conPipe);
-	else if (conPipe) {
-
+	if(conPipe){
+		np_exec(arglist,conPipe);
 	}
+	else
+		execute(arglist, conAmp, conPipe);
 }
 
 void  execute(char **argv, int conAmp,int conPipe)
 {
 	pid_t  pid;
 	int    status;
+	
 	if (conPipe + conAmp == 0) {
 		if ((pid = fork()) < 0) {     /* fork a child process           */
 			printf("*** ERROR: forking child process failed\n");
@@ -51,50 +54,45 @@ void  execute(char **argv, int conAmp,int conPipe)
 	}
 	
 }
-void np_exec(char* cmd, char** argv)
+void np_exec(char** argv,int i)
 {
-	int pipefd[2];
-	assert(pipe(pipefd) != -1);
-	int procID = fork();
-	if (procID < 0) { // fork failed
-		perror("fork failed");
+	int des_p[2];
+	argv[i]=NULL;
+	char** argv2=argv+i+1;
+	if(pipe(des_p) == -1) {
+		perror("Pipe failed");
+		exit(1);
 	}
-	if (procID == 0) { // child process
-		dup2(pipefd[0], fileno(stdin));
-		close(pipefd[1]);
+	
+	if(fork() == 0)        //first fork
+	{
+		close(1);          //closing stdout
+		dup(des_p[1]);     //replacing stdout with pipe write 
+		close(des_p[0]);   //closing pipe read
+		close(des_p[1]);
+		
+		
+		execvp(argv[0], argv);
+		perror("execvp of ls failed");
+		exit(1);
 	}
-	else { // parent process
-		dup2(pipefd[1], fileno(stdout));
-		close(pipefd[0]);
-		if (execvp(cmd, argv) == -1) {
-			perror("execvp failed");
-		}
+	
+	if(fork() == 0)        //creating 2nd child
+	{
+		close(0);          //closing stdin
+		dup(des_p[0]);     //replacing stdin with pipe read
+		close(des_p[1]);   //closing pipe write
+		close(des_p[0]);
+		
+		
+		execvp(argv2[0], argv2);
+		perror("execvp of wc failed");
+		exit(1);
 	}
-}
-
-int execPipe(int argc, char** argv)
-{
-	assert(strcmp(argv[argc - 1], "-")); // check that the last argument is not "-"
-
-	int i;
-	for (i = 1; i < argc; ++i) {
-		if (!strcmp(argv[i], "-")) { // if argv[i] is "-"
-			argv[i] = NULL;
-			np_exec(argv[1], &argv[1]);
-			argv = &argv[i];
-			argc -= i;
-			i = 0;
-		}
-	}
-
-	char* args[argc];
-	args[argc - 1] = NULL;
-
-	for (i = 1; i < argc; ++i) {
-		args[i - 1] = argv[i];
-	}
-
-	if (execvp(args[0], args) == -1)
-		perror("execvp failed");
-	return;
+	
+	close(des_p[0]);
+	close(des_p[1]);
+	wait(0);
+	wait(0);
+	return 0;
 }
