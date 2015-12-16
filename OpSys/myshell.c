@@ -10,8 +10,12 @@
 #include <string.h>
 #include <signal.h>
 #include "input.c"
-int  execute(char **argv, int conAmp,int conPipe);
-int np_exec(char** argv,int i);
+int execute(char **argv);
+int pipeExec(char** argv,int i);
+
+void* waiter(void* arg){
+	waitpid((int)arg,
+}
 
 
 int contains(int count, char** arglist, char let) {
@@ -28,77 +32,85 @@ int process_arglist(int count, char** arglist) {
 	int conAmp = contains(count, arglist, '&');
 	int conPipe = contains(count, arglist, '|');
 	if(conPipe)
-		np_exec(arglist,conPipe)
+		pipeExec(arglist,conPipe);
+	if(conAmp)
+		ampExec(arglist);
 	else
-		execute(arglist, conAmp, conPipe)
-			
+		execute(arglist);
+	
 	return 1;
 }
 
-int  execute(char **argv, int conAmp,int conPipe)
-{
-	pid_t  pid;
-	int    status;
-	
-	if (conPipe + conAmp == 0) {
-		if ((pid = fork()) < 0) {     /* fork a child process           */
-			perror("Fork failed");
-			exit(1);
-		}
-		else if (pid == 0) {          /* for the child process:         */
-			if (execvp(*argv, argv) < 0) {     /* execute the command  */
-				printf("exec failed\n");
-				return 0;
-			}
-		}
-		else {                                  /* for the parent:      */
-			while (wait(&status) != pid)       /* wait for completion  */
-				;
-		}
-	}
+int ampExec(arglist){
 	
 }
-int np_exec(char** argv,int i)
-{
-	int pid1,pid2;
-	int des_p[2];
+
+int execute(char **argv){
+	
+	pid_t pid;
+	int status;
+	
+	
+	if ((pid = fork()) < 0) {
+		perror("Fork failed");
+		exit(1);
+	}
+	else if (pid == 0) {//If child
+		if (execvp(*argv, argv) < 0) {
+			perror("exec failed\n");
+			return 0;
+		}
+	}
+	else {
+		while (wait(&status) != pid)
+			;
+	}
+	
+	
+}
+//Based on stackoverflow code
+int pipeExec(char** argv,int i){
+	
+	pid_t pid1,pid2;
+	int pipeArr[2];
 	argv[i]=NULL;
-	char** argv2=argv+i+1;
-	if(pipe(des_p) == -1) {
+	char** argv2=argv+i+1;//Setting the second command
+	if(pipe(pipeArr) == -1) {
 		perror("Pipe failed");
 		exit(1);
 	}
 	
-	if(pid1=fork() == 0)        //first fork
-	{
-		close(1);          //closing stdout
-		dup(des_p[1]);     //replacing stdout with pipe write 
-		close(des_p[0]);   //closing pipe read
-		close(des_p[1]);
+	if(pid1=fork() == 0) //Handle the first cmd
+	{//Closes stdout first in order to write to the pipe instead of stdout
+		close(1);
+		dup2(pipeArr[1],fileno(stdout));
+		
+		close(pipeArr[0]); 
+		close(pipeArr[1]);
 		execvp(argv[0], argv);
-		perror("execvp failed");
-		return 0;
+		perror("execvp failed");//Should only get here in error
+		exit(1);
 	}
-	else{
+	else if (pid1<0){
 		perror("Fork failed");
 		exit(1);
 	}
-	if(pid2=fork() == 0)        //creating 2nd child
-	{
-		close(0);          //closing stdin
-		dup(des_p[0]);     //replacing stdin with pipe read
-		close(des_p[1]);   //closing pipe write
-		close(des_p[0]);
+	if(pid2=fork() == 0) //Handle the second cmd
+	{//Closes stdin first in order to write to the pipe instead of stdin
+		close(0);
+		dup2(pipeArr[0],fileno(stdin));
+		close(pipeArr[1]);
+		close(pipeArr[0]);
 		execvp(argv2[0], argv2);
-		perror("execvp failed");
-		return 0;
+		perror("execvp failed");//Should only get here in error
+		exit(1);
 	}
-	else{
+	else if (pid2<0){
 		perror("Fork failed");
 		exit(1);
 	}
-	close(des_p[0]);
-	close(des_p[1]);
+	close(pipeArr[0]);
+	close(pipeArr[1]);
 	wait(0);
 	wait(0);
 	return 0;
