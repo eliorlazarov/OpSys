@@ -14,7 +14,9 @@ int execute(char **argv);
 int pipeExec(char** argv,int i);
 
 void* waiter(void* arg){
-	waitpid((int)arg,
+	int* status;
+	int arg1=(int) arg;
+	waitpid((int)arg1,NULL,0);
 }
 
 
@@ -34,15 +36,33 @@ int process_arglist(int count, char** arglist) {
 	if(conPipe)
 		pipeExec(arglist,conPipe);
 	if(conAmp)
-		ampExec(arglist);
+		ampExec(arglist,count);
 	else
 		execute(arglist);
 	
 	return 1;
 }
 
-int ampExec(arglist){
+int ampExec(char **argv,int count){
+	int pt;
+	pid_t pid;
+	int status;
+	argv[count-1]=NULL;
 	
+	if ((pid = fork()) < 0) {
+		perror("Fork failed");
+		exit(1);
+	}
+	else if (pid == 0) {//If child
+		if (execvp(*argv, argv) < 0) {
+			perror("exec failed\n");
+			return 0;
+		}
+	}
+	else{
+		pt=pthread_create(pt,NULL,waiter,(void *)pid);
+	}
+	return 0;
 }
 
 int execute(char **argv){
