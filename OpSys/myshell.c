@@ -14,9 +14,9 @@ int execute(char **argv);
 int pipeExec(char** argv,int i);
 
 void* waiter(void* arg){
-	int* status;
+	int status;
 	int arg1=(int) arg;
-	waitpid((int)arg1,NULL,0);
+	waitpid((int)arg1,&status,1);
 }
 
 
