@@ -35,7 +35,7 @@ int process_arglist(int count, char** arglist) {
 	int conPipe = contains(count, arglist, '|');
 	if(conPipe)
 		pipeExec(arglist,conPipe);
-	if(conAmp)
+	else if(conAmp)
 		ampExec(arglist,count);
 	else
 		execute(arglist);
@@ -48,7 +48,7 @@ int ampExec(char **argv,int count){
 	pid_t pid;
 	int status;
 	argv[count-1]=NULL;
-	
+	pthread_t thready;
 	if ((pid = fork()) < 0) {
 		perror("Fork failed");
 		exit(1);
@@ -60,9 +60,13 @@ int ampExec(char **argv,int count){
 		}
 	}
 	else{
-		pt=pthread_create(pt,NULL,waiter,(void *)pid);
+		if(pt=pthread_create(&thready,NULL,waiter,(void *)pid))
+		{
+			perror("ptread failed");
+			exit(0);
+		}
 	}
-	return 0;
+	return 1;
 }
 
 int execute(char **argv){
@@ -99,34 +103,32 @@ int pipeExec(char** argv,int i){
 		perror("Pipe failed");
 		exit(1);
 	}
-	
-	if(pid1=fork() == 0) //Handle the first cmd
-	{//Closes stdout first in order to write to the pipe instead of stdout
+	if((pid1=fork()) < 0){ //Handle the first cmd
+		perror("Fork failed");
+		exit(1);
+	}
+	else if (pid1 == 0){
+		//Closes stdout first in order to write to the pipe instead of stdout
 		close(1);
 		dup2(pipeArr[1],fileno(stdout));
-		
 		close(pipeArr[0]); 
 		close(pipeArr[1]);
 		execvp(argv[0], argv);
 		perror("execvp failed");//Should only get here in error
 		exit(1);
 	}
-	else if (pid1<0){
+	if((pid2=fork()) < 0){ //Handle the second cmd
 		perror("Fork failed");
 		exit(1);
 	}
-	if(pid2=fork() == 0) //Handle the second cmd
-	{//Closes stdin first in order to write to the pipe instead of stdin
+	else if (pid2 == 0){
+		//Closes stdin first in order to write to the pipe instead of stdin
 		close(0);
 		dup2(pipeArr[0],fileno(stdin));
 		close(pipeArr[1]);
 		close(pipeArr[0]);
 		execvp(argv2[0], argv2);
 		perror("execvp failed");//Should only get here in error
-		exit(1);
-	}
-	else if (pid2<0){
-		perror("Fork failed");
 		exit(1);
 	}
 	close(pipeArr[0]);
