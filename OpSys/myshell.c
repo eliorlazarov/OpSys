@@ -81,7 +81,7 @@ int execute(char **argv){
 	}
 	else if (pid == 0) {//If child
 		if (execvp(*argv, argv) < 0) {
-			perror("exec failed\n");
+			perror("execvp failed\n");
 			return 0;
 		}
 	}
@@ -90,7 +90,7 @@ int execute(char **argv){
 			;
 	}
 	
-	
+	return 1;
 }
 //Based on stackoverflow code
 int pipeExec(char** argv,int i){
@@ -108,32 +108,55 @@ int pipeExec(char** argv,int i){
 		exit(1);
 	}
 	else if (pid1 == 0){
-		//Closes stdout first in order to write to the pipe instead of stdout
-		close(1);
-		dup2(pipeArr[1],fileno(stdout));
+		if(dup2(pipeArr[1],fileno(stdout))<0){
+			perror("dup");
+			return 0;
+		}
 		close(pipeArr[0]); 
 		close(pipeArr[1]);
 		execvp(argv[0], argv);
 		perror("execvp failed");//Should only get here in error
 		exit(1);
+		
+	}
+	pthread_t t1;
+	int returnC=pthread_create(&t1,NULL,waiter,(void*)pid1);
+	if(returnC){
+		perror("pthread create");
 	}
 	if((pid2=fork()) < 0){ //Handle the second cmd
 		perror("Fork failed");
 		exit(1);
 	}
 	else if (pid2 == 0){
-		//Closes stdin first in order to write to the pipe instead of stdin
-		close(0);
-		dup2(pipeArr[0],fileno(stdin));
+		if(dup2(pipeArr[0],fileno(stdin))<0){
+			perror("dup");
+			return 0;
+		}
 		close(pipeArr[1]);
 		close(pipeArr[0]);
 		execvp(argv2[0], argv2);
 		perror("execvp failed");//Should only get here in error
 		exit(1);
+		
 	}
 	close(pipeArr[0]);
 	close(pipeArr[1]);
-	wait(0);
-	wait(0);
-	return 0;
+	pthread_t t2;
+	returnC=pthread_create(&t2,NULL,waiter,(void*)pid2);
+	if(returnC){
+		perror("pthread create");
+	}
+	returnC=pthread_join(t1,NULL);
+	if(returnC){
+		perror("join1");
+		exit(1);
+	}
+	returnC=pthread_join(t2,NULL);
+	if(returnC){
+		perror("join2");
+		exit(1);
+	}
+	
+	return 1;
 }
