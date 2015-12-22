@@ -24,6 +24,7 @@ if it doesn't have either, just run the command as-is
 #include "input.c"
 int execute(char **argv);
 int pipeExec(char** argv,int i);
+int ampExec(char **argv,int count);
 
 //the waiting function
 void* waiter(void* arg){
@@ -61,21 +62,20 @@ int ampExec(char **argv,int count){
 	pid_t pid;
 	int status;
 	argv[count-1]=NULL;
-	pthread_t thready;
+	pthread_t thread;
 	if ((pid = fork()) < 0) {
 		perror("Fork failed");
 		exit(1);
 	}
 	else if (pid == 0) {//If child
 		if (execvp(argv[0], argv) < 0) {
-			perror("exec failed\n");
+			perror("exec failed");
 			return 0;
 		}
 	}
 	else{
-		if(pt=pthread_create(&thready,NULL,waiter,(void *)pid))
-		{
-			perror("ptread failed");
+		if(pt=pthread_create(&thread,NULL,waiter,(void *)pid)){
+			perror("pthread failed");
 			exit(0);
 		}
 	}
@@ -94,13 +94,13 @@ int execute(char **argv){
 	}
 	if (pid == 0) {//If child
 		if (execvp(argv[0], argv) < 0) {
-			perror("execvp failed\n");
+			perror("execvp failed");
 			return 0;
 		}
 	}
 	else {//Parent
 		while (1)
-			if(wait(&status) != pid);
+			if(wait(&status) == pid)
 				break;
 	}
 	
