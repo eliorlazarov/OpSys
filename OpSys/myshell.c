@@ -25,7 +25,7 @@ int process_arglist(int count, char** arglist) {
 	if(conPipe+conAmp==0)
 		execute(arglist, conAmp, conPipe);
 	else if (conPipe) {
-
+		np_exec(*arglist)
 	}
 }
 
